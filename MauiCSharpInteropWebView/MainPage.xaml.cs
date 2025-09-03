@@ -30,6 +30,9 @@ public partial class MainPage : ContentPage
         myHybridWebView.ProxyRequestReceived += MyHybridWebView_OnProxyRequestReceived;
 
         myHybridWebView.HybridWebViewInitialized += MyHybridWebView_WebViewInitialized;
+        
+        // Add navigation event handlers to monitor errors
+        myHybridWebView.Navigated += MyHybridWebView_Navigated;
     }
 
     private void MyHybridWebView_WebViewInitialized(object sender, HybridWebViewInitializedEventArgs e)
@@ -38,6 +41,18 @@ public partial class MainPage : ContentPage
         // Disable the user manually zooming
         e.WebView.CoreWebView2.Settings.IsZoomControlEnabled = false;
 #endif
+    }
+
+    private void MyHybridWebView_Navigated(object sender, WebNavigatedEventArgs e)
+    {
+        if (e.Result == WebNavigationResult.Success)
+        {
+            WriteToLog($"Navigation succeeded to: {e.Url}");
+        }
+        else
+        {
+            WriteToLog($"Navigation failed to: {e.Url} with result: {e.Result}");
+        }
     }
 
     public string CurrentPageName => $"Current hybrid page: {_currentPage}";
@@ -56,6 +71,13 @@ public partial class MainPage : ContentPage
     {
         var sum = await myHybridWebView.InvokeJsMethodAsync<int>("JsAddNumbers", 123, 456);
         WriteToLog($"JS Return value received with sum: {sum}");
+    }
+
+    private void OnTestNetworkError(object sender, EventArgs e)
+    {
+        // Test network error handling by navigating to a non-existent URL
+        WriteToLog("Testing network error handling by navigating to non-existent URL...");
+        myHybridWebView.Navigate("https://non-existent-domain-12345.com/test");
     }
 
     private void OnHybridWebViewRawMessageReceived(object sender, HybridWebView.HybridWebViewRawMessageReceivedEventArgs e)

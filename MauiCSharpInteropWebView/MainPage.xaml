@@ -4,7 +4,7 @@
              xmlns:hwv="clr-namespace:HybridWebView;assembly=HybridWebView"
              x:Class="MauiCSharpInteropWebView.MainPage">
 
-    <Grid ColumnDefinitions="2*,1*,1*" RowDefinitions="Auto,Auto,1*,3*">
+    <Grid ColumnDefinitions="2*,1*,1*,1*" RowDefinitions="Auto,Auto,1*,3*">
         <Label
                 Text="{Binding CurrentPageName}"
                 FontSize="32"
@@ -24,15 +24,21 @@
                 IsEnabled="{Binding PageAllowsMethodInvoke}"
                 Margin="5"  />
 
+        <Button Grid.Column="3"
+                Text="Test Network Error"
+                Clicked="OnTestNetworkError"
+                HorizontalOptions="Center"
+                Margin="5"  />
+
         <Label
-                Grid.Row="1" Grid.ColumnSpan="3" 
+                Grid.Row="1" Grid.ColumnSpan="4" 
                 Text=".NET message log"
                 FontSize="16"
                 Margin="5"/>
 
-        <Editor Grid.Row="2" Grid.ColumnSpan="3" Text="{Binding MessageLog}" IsReadOnly="True" CursorPosition="{Binding MessageLogPosition}" />
+        <Editor Grid.Row="2" Grid.ColumnSpan="4" Text="{Binding MessageLog}" IsReadOnly="True" CursorPosition="{Binding MessageLogPosition}" />
 
-        <hwv:HybridWebView Grid.Row="3" Grid.ColumnSpan="3" x:Name="myHybridWebView" HybridAssetRoot="hybrid_root" MainFile="hybrid_app.html" 
+        <hwv:HybridWebView Grid.Row="3" Grid.ColumnSpan="4" x:Name="myHybridWebView" HybridAssetRoot="hybrid_root" MainFile="hybrid_app.html" 
                            RawMessageReceived="OnHybridWebViewRawMessageReceived"/>
     </Grid>
 

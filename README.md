@@ -175,6 +175,39 @@ Be sure to encode the query string parameters so that they are properly handled.
  
 **NOTE:** Data from the webview can only be set in the proxy query string. POST body data is not supported as the native `WebView` in platforms do not support it.
 
+## Error Handling
+
+The `HybridWebView` control automatically handles network errors and loading failures on Android to prevent the default system error pages from displaying. This provides a better user experience when there's no network connectivity or when web content fails to load.
+
+### Android Error Handling
+
+On Android, the following error scenarios are handled automatically:
+
+- **Network errors**: When there's no internet connection or DNS resolution fails
+- **HTTP errors**: When the server returns error status codes (404, 500, etc.)
+- **SSL errors**: When there are certificate or SSL/TLS connection issues
+
+Instead of showing the default Android error page, the WebView will remain blank or show the last successfully loaded content. Navigation events will still fire with `WebNavigationResult.Failure` so your app can respond appropriately.
+
+### Testing Error Handling
+
+You can test the error handling by navigating to a non-existent URL:
+
+```csharp
+// This will not show an error page on Android
+myHybridWebView.Navigate("https://non-existent-domain.com/test");
+
+// Handle the navigation result
+myHybridWebView.Navigated += (sender, e) =>
+{
+    if (e.Result == WebNavigationResult.Failure)
+    {
+        // Handle the error gracefully in your app
+        Console.WriteLine($"Navigation failed: {e.Url}");
+    }
+};
+```
+
 ## How to run the source code in this repo
 
 To run this app you need to have [Visual Studio for Windows or Mac, including the .NET MAUI workload](https://learn.microsoft.com/dotnet/maui/get-started/installation?view=net-maui-8.0). Then clone this repo, open the solution, and run one of the sample projects.

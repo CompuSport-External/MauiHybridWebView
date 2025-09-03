@@ -155,6 +155,35 @@ namespace HybridWebView
             new Dictionary<string, string> {
                 { "Content-Type", contentType },
             };
+
+        public override void OnReceivedError(AWebView? view, IWebResourceRequest? request, WebResourceError? error)
+        {
+            // Prevent the default Android error page from showing
+            // by not calling the base implementation
+            System.Diagnostics.Debug.WriteLine($"HybridWebView OnReceivedError: {error?.Description} for {request?.Url}");
+        }
+
+        public override void OnReceivedError(AWebView? view, ClientError errorCode, string? description, string? failingUrl)
+        {
+            // Prevent the default Android error page from showing 
+            // by not calling the base implementation
+            System.Diagnostics.Debug.WriteLine($"HybridWebView OnReceivedError: {errorCode} - {description} for {failingUrl}");
+        }
+
+        public override void OnReceivedHttpError(AWebView? view, IWebResourceRequest? request, WebResourceResponse? errorResponse)
+        {
+            // Prevent the default Android error page from showing
+            // by not calling the base implementation 
+            System.Diagnostics.Debug.WriteLine($"HybridWebView OnReceivedHttpError: {errorResponse?.StatusCode} for {request?.Url}");
+        }
+
+        public override void OnReceivedSslError(AWebView? view, SslErrorHandler? handler, SslError? error)
+        {
+            // For SSL errors, we still need to handle the error to prevent hanging
+            // Cancel the request to prevent showing error page
+            handler?.Cancel();
+            System.Diagnostics.Debug.WriteLine($"HybridWebView OnReceivedSslError: {error?.ToString()}");
+        }
     }
 
     public class HybridWebChromeClient : MauiWebChromeClient
