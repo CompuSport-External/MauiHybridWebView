@@ -66,7 +66,7 @@ namespace HybridWebView
 
             [Export("webView:startURLSchemeTask:")]
             [SupportedOSPlatform("ios11.0")]
-            public async void StartUrlSchemeTask(WKWebView webView, IWKUrlSchemeTask urlSchemeTask)
+            public void StartUrlSchemeTask(WKWebView webView, IWKUrlSchemeTask urlSchemeTask)
             {
 
             }
