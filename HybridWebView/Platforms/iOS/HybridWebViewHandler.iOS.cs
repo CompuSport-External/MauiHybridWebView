@@ -163,30 +163,54 @@ namespace HybridWebView
                     return;
                 }
 
-                var navEvent = WebNavigationEvent.NewPage;
-                var navigationType = navigationAction.NavigationType;
+                // Only surface main-frame navigations
+                var targetFrame = navigationAction.TargetFrame;
+                bool isMainFrame = targetFrame?.MainFrame ?? true; // null sometimes means new window; treat as main-frame
 
-                switch (navigationType)
+                var request = navigationAction.Request;
+                var url = request?.Url;
+                var abs = url?.AbsoluteString ?? string.Empty;
+                var scheme = url?.Scheme ?? string.Empty;
+
+                // Internal/placeholder navigations we should allow but *not* notify about
+                bool isInternalNav =
+                    string.Equals(abs, "about:blank", StringComparison.OrdinalIgnoreCase) ||
+                    abs.StartsWith("about:srcdoc", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(scheme, "blob", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(scheme, "data", StringComparison.OrdinalIgnoreCase);
+
+                // If it's not the main frame OR it's an internal URL (like about:blank), just allow and exit early
+                if (!isMainFrame || isInternalNav)
+                {
+                    decisionHandler.Invoke(WKNavigationActionPolicy.Allow);
+                    return;
+                }
+
+                var navEvent = WebNavigationEvent.NewPage;
+
+                switch (navigationAction.NavigationType)
                 {
                     case WKNavigationType.LinkActivated:
                         navEvent = WebNavigationEvent.NewPage;
 
-                        if (navigationAction.TargetFrame == null)
-                            webView?.LoadRequest(navigationAction.Request);
+                        // If target is null, WebKit wants a new window; load into this webview instead
+                        if (navigationAction.TargetFrame == null && request != null)
+                            webView?.LoadRequest(request);
+                        break;
 
-                        break;
                     case WKNavigationType.FormSubmitted:
-                        navEvent = WebNavigationEvent.NewPage;
-                        break;
-                    case WKNavigationType.BackForward:
-                        navEvent = CurrentNavigationEvent;
-                        break;
-                    case WKNavigationType.Reload:
-                        navEvent = WebNavigationEvent.Refresh;
-                        break;
                     case WKNavigationType.FormResubmitted:
                         navEvent = WebNavigationEvent.NewPage;
                         break;
+
+                    case WKNavigationType.BackForward:
+                        navEvent = CurrentNavigationEvent;
+                        break;
+
+                    case WKNavigationType.Reload:
+                        navEvent = WebNavigationEvent.Refresh;
+                        break;
+
                     case WKNavigationType.Other:
                         navEvent = WebNavigationEvent.NewPage;
                         break;
@@ -194,13 +218,12 @@ namespace HybridWebView
 
                 _lastEvent = navEvent;
 
-                var request = navigationAction.Request;
-                var lastUrl = request.Url.ToString();
-
+                var lastUrl = abs;
                 bool cancel = virtualView.Navigating(navEvent, lastUrl);
-                //platformView.UpdateCanGoBackForward(virtualView);
+
                 decisionHandler(cancel ? WKNavigationActionPolicy.Cancel : WKNavigationActionPolicy.Allow);
             }
+
 
             string GetCurrentUrl()
             {
