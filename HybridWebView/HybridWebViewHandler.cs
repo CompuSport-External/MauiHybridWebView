@@ -29,6 +29,9 @@ namespace HybridWebView
         public bool IsRestoringState { get; private set; }   // changed to public for external readiness checks
         internal void FinishRestore() => IsRestoringState = false; // called by client
 
+        private AndroidHybridWebViewClient? _client;
+        private HybridWebChromeClient? _chromeClient;
+
         protected override Android.Webkit.WebView CreatePlatformView()
         {
             if (_platformWebView != null)
@@ -83,7 +86,7 @@ namespace HybridWebView
 
             var pv = handler.PlatformView;
 
-            if (pv.WebViewClient is AndroidHybridWebViewClient existing)
+            if (platformHandler._client is AndroidHybridWebViewClient existing)
             {
                 // --- 1. update the strong reference inside our own class
                 typeof(AndroidHybridWebViewClient)
@@ -100,7 +103,8 @@ namespace HybridWebView
 
             // Otherwise attach a fresh client (first time only)
             var client = new AndroidHybridWebViewClient(platformHandler);
-            pv.SetWebViewClient(client);
+            handler.PlatformView.SetWebViewClient(client);
+            platformHandler._client = client;
 
             // wire the base-class field once
             typeof(MauiWebViewClient)
@@ -110,17 +114,18 @@ namespace HybridWebView
 
         public static void MapHybridWebChromeClient(IWebViewHandler handler, IWebView webView)
         {
-            if (handler?.PlatformView == null)
+            if (handler is not HybridWebViewHandler platformHandler || handler.PlatformView is null)
                 return;
 
-            if (handler is HybridWebViewHandler platformHandler && handler.PlatformView.WebChromeClient is not HybridWebChromeClient)
+            if (platformHandler._chromeClient is null)
             {
-                handler.PlatformView.SetWebChromeClient(new HybridWebChromeClient(platformHandler));
+                platformHandler._chromeClient = new HybridWebChromeClient(platformHandler);
+                handler.PlatformView.SetWebChromeClient(platformHandler._chromeClient);
             }
             else if (handler is WebViewHandler viewHandler)
             {
                 var handlerField = typeof(Android.Webkit.WebChromeClient).GetField("_handler", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.FlattenHierarchy);
-                handlerField?.SetValue(handler.PlatformView.WebChromeClient, viewHandler);
+                handlerField?.SetValue(platformHandler._chromeClient, viewHandler);
             }
         }
 

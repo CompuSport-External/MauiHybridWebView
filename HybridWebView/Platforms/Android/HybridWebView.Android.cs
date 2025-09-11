@@ -59,6 +59,9 @@ namespace HybridWebView
                 cookieManager.Flush();
             }
 
+            if (string.IsNullOrEmpty(url))
+                return;
+
             PlatformWebView.LoadUrl(new Uri(url).ToString(), HybridWebView.AdditionalHeaders);
         }
 
