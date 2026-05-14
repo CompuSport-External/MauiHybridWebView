@@ -62,7 +62,10 @@ namespace HybridWebView
             if (string.IsNullOrEmpty(url))
                 return;
 
-            PlatformWebView.LoadUrl(new Uri(url).ToString(), HybridWebView.AdditionalHeaders);
+            if (Handler?.PlatformView is not AWebView platformWebView)
+                return;
+
+            platformWebView.LoadUrl(new Uri(url).ToString(), HybridWebView.AdditionalHeaders);
         }
 
         public partial Task ClearAllCookiesAsync()
@@ -83,7 +86,8 @@ namespace HybridWebView
             cookieManager.RemoveSessionCookies(null); // Use RemoveSessionCookies instead of RemoveExpiredCookie
             cookieManager.Flush();
 
-            PlatformWebView.ClearCache(true);
+            if (Handler?.PlatformView is AWebView platformWebView)
+                platformWebView.ClearCache(true);
 
             return Task.CompletedTask;
         }

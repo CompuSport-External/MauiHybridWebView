@@ -27,13 +27,28 @@ namespace HybridWebView
 
         private bool TryGetAttachedHandler(out HybridWebViewHandler handler)
         {
-            if (_handlerRef.TryGetTarget(out handler) &&
-                handler.PlatformView != null &&
-                handler.VirtualView != null)
+            if (_handlerRef.TryGetTarget(out var targetHandler) &&
+                HasAttachedPlatformView(targetHandler) &&
+                targetHandler.VirtualView != null)
+            {
+                handler = targetHandler;
                 return true;
+            }
 
             handler = null!;
             return false;
+        }
+
+        private static bool HasAttachedPlatformView(HybridWebViewHandler handler)
+        {
+            try
+            {
+                return handler.PlatformView != null;
+            }
+            catch (InvalidOperationException ioe) when (ioe.Message?.Contains("PlatformView cannot be null", StringComparison.OrdinalIgnoreCase) == true)
+            {
+                return false;
+            }
         }
 
         public override bool ShouldOverrideUrlLoading(AWebView? view, IWebResourceRequest? request)

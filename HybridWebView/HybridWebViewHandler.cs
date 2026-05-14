@@ -79,12 +79,25 @@ namespace HybridWebView
             base.ConnectHandler(platformView);
         }
 
+        private static bool TryGetPlatformView(IWebViewHandler handler, out Android.Webkit.WebView platformView)
+        {
+            try
+            {
+                platformView = handler.PlatformView
+                    ?? throw new InvalidOperationException("PlatformView cannot be null.");
+                return true;
+            }
+            catch (InvalidOperationException ioe) when (ioe.Message?.Contains("PlatformView cannot be null", StringComparison.OrdinalIgnoreCase) == true)
+            {
+                platformView = null!;
+                return false;
+            }
+        }
+
         public static void MapHybridWebViewClient(IWebViewHandler handler, IWebView webView)
         {
-            if (handler is not HybridWebViewHandler platformHandler || handler.PlatformView is null)
+            if (handler is not HybridWebViewHandler platformHandler || !TryGetPlatformView(handler, out var platformView))
                 return;
-
-            var pv = handler.PlatformView;
 
             if (platformHandler._client is AndroidHybridWebViewClient existing)
             {
@@ -103,7 +116,7 @@ namespace HybridWebView
 
             // Otherwise attach a fresh client (first time only)
             var client = new AndroidHybridWebViewClient(platformHandler);
-            handler.PlatformView.SetWebViewClient(client);
+            platformView.SetWebViewClient(client);
             platformHandler._client = client;
 
             // wire the base-class field once
@@ -114,13 +127,13 @@ namespace HybridWebView
 
         public static void MapHybridWebChromeClient(IWebViewHandler handler, IWebView webView)
         {
-            if (handler is not HybridWebViewHandler platformHandler || handler.PlatformView is null)
+            if (handler is not HybridWebViewHandler platformHandler || !TryGetPlatformView(handler, out var platformView))
                 return;
 
             if (platformHandler._chromeClient is null)
             {
                 platformHandler._chromeClient = new HybridWebChromeClient(platformHandler);
-                handler.PlatformView.SetWebChromeClient(platformHandler._chromeClient);
+                platformView.SetWebChromeClient(platformHandler._chromeClient);
             }
             else if (handler is WebViewHandler viewHandler)
             {
