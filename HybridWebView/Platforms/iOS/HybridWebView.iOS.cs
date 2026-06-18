@@ -1,6 +1,7 @@
 ﻿using Foundation;
 using UIKit;
 using WebKit;
+using Microsoft.Maui.Controls;
 
 namespace HybridWebView
 {
@@ -8,9 +9,20 @@ namespace HybridWebView
     {
         private WKWebView PlatformWebView => (WKWebView)Handler!.PlatformView!;
 
+        private NSObject? _didBecomeActiveObserver;
+
         private partial Task InitializeHybridWebView()
         {
+            _didBecomeActiveObserver = NSNotificationCenter.DefaultCenter.AddObserver(UIApplication.DidBecomeActiveNotification, HandleDidBecomeActive);
             return Task.CompletedTask;
+        }
+
+        private void HandleDidBecomeActive(NSNotification notification)
+        {
+            if (PlatformWebView.Url == null || PlatformWebView.Url.AbsoluteString == "about:blank")
+            {
+                Microsoft.Maui.Controls.Device.BeginInvokeOnMainThread(() => Navigate(StartPath));
+            }
         }
 
         private partial void NavigateCore(string url)
@@ -43,6 +55,13 @@ namespace HybridWebView
             //        _cookieDomains[domain.Key] = domain.Value - 1;
             //    }
             //}
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            base.Dispose(disposing);
+            _didBecomeActiveObserver?.Dispose();
+            _didBecomeActiveObserver = null;
         }
     }
 }
